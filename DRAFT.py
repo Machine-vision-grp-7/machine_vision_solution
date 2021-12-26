@@ -185,3 +185,34 @@ mask_blue = magic_wand(src_hsv,blue_color_hsv_255,80)
 mask_yellow_apple = magic_wand(src_hsv,yellow_apple_hsv_255,60)
 mask_brown = magic_wand(src_hsv,brown_color_hsv_255,50)
 mask_dark_green = magic_wand(src_hsv,dark_green_color_hsv_255,50)
+
+#%%
+def average_color(img_path,mask_path):
+    image = cv.imread(img_path)
+    mask = cv.imread(mask_path)
+    image_hsv = cv.cvtColor(image, cv.COLOR_BGR2HSV)
+    new_image = np.array(image.shape)
+    show_img(img_path)
+    show_img(mask)
+    avg = [0,0,0]
+    sum = 0
+    for i in range(len(image_hsv)):
+        for j in range(len(image_hsv[0])):
+            if list(mask[i][j]) != [0, 0, 0]:
+                for k in range(len(image_hsv[0][0])):
+                    avg[k] += image_hsv[i][j][k]
+                sum+=1
+                new_image[i][j] = image[i][j]
+    
+    avg[0] = avg[0]/sum
+    avg[1] = avg[1]/sum
+    avg[2] = avg[2]/sum
+    print(sum)
+    plt.figure(figsize = (10,10))
+    plt.title("Image")
+    plt.imshow(new_image)
+    print(new_image)
+    plt.show()
+    return hsv_255_to_degre_and_percent(avg)
+
+print(average_color(img_path,mask_path))
