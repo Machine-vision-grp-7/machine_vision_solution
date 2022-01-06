@@ -1,6 +1,3 @@
-#%%
-# 
-
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
@@ -9,14 +6,19 @@ from os import listdir
 from os.path import isfile, join
 import statistics
 import sys
-
 from numpy.core.numeric import outer
+
+path_imgs = "MinneApple/imgs/detection/train/images/"
+path_masks = "MinneApple/imgs/detection/train/masks/"
+
+
 
 def magic_wand(img_hsv,color,tolerance):
     lowerBound = np.array(list_dif(color,tolerance))
     upperBound = np.array(list_sum(color,tolerance))
     mask2 = False
     mask3 = False
+    #used for circling around the HSV cylindrical color space
     if lowerBound[0]<0:
         lowerBound2 = lowerBound.copy()
         upperBound2 = upperBound.copy()
@@ -32,8 +34,11 @@ def magic_wand(img_hsv,color,tolerance):
         upperBound[0] = 360
         mask3 = True
 
+    #generate the mask
     mask=cv.inRange(img_hsv,lowerBound,upperBound)
 
+    #used to generate the additional pask if we circle around
+    #the hsv color space
     if mask2:
         mask2=cv.inRange(img_hsv,lowerBound,upperBound)
         mask = mask + mask2
@@ -43,42 +48,22 @@ def magic_wand(img_hsv,color,tolerance):
     return mask
     
 
-# def magic_wand(img_hsv,color,tolerance):
-#     mask = np.zeros((len(img_hsv),len(img_hsv[0])))
-#     for i in range(len(img_hsv)):
-#         for j in range(len(img_hsv[0])):
-#             keep = True
-#             for k in range(len(img_hsv[0][0])):
-#                 if k != 0:
-#                     if abs(img_hsv[i][j][k]-color[k]) > tolerance[k]:
-#                         keep = False
-#                 else:
-#                     R_lim_angle = color[0] + tolerance[k]
-#                     L_lim_angle = color[0] - tolerance[k]
-
-#                     if (abs(img_hsv[i][j][0]-color[0]) > tolerance[k]):
-
-#                         if L_lim_angle < 0:
-#                             if (abs((img_hsv[i][j][0]-255)-color[0]) > tolerance[k]):
-#                                 keep = False
-#                         elif R_lim_angle > 255:
-#                             if abs((img_hsv[i][j][0]+255)-color[0]) > tolerance[k]:
-#                                 keep = False
-#                         else:
-#                             keep = False
-#             if keep:
-#                 mask[i][j] = 1
-
-#     return mask
-
 def list_dif(a,b):
+    """
+    calculate the difference between each item of 2 lists
+    """
     return [a_i - b_i for a_i, b_i in zip(a, b)]
 
 def list_sum(a,b):
+    """
+    calculate the sum between each item of 2 lists
+    """
     return [a_i + b_i for a_i, b_i in zip(a, b)]
 
 
 def hsv_degre_and_percent_to_255(hsv_degre_and_percent):
+    """convert an HSV color with ranges [0-360,0-100,0-100]
+    to [0-180,0-255,0-255]"""
     hsv_255 = [0,0,0]
     hsv_255[0] = hsv_degre_and_percent[0]*180/360
     hsv_255[1] = hsv_degre_and_percent[1]*255/100
@@ -87,6 +72,8 @@ def hsv_degre_and_percent_to_255(hsv_degre_and_percent):
 
 
 def hsv_255_to_degre_and_percent(hsv_255):
+    """convert an HSV color with ranges [0-180,0-255,0-255]
+    to [0-360,0-100,0-100]"""
     hsv_degre_and_percent = [0,0,0]
     hsv_degre_and_percent[0] = hsv_255[0]*360/180
     hsv_degre_and_percent[1] = hsv_255[1]*100/255
@@ -209,7 +196,7 @@ def count_apples(source_path,parameters=[[30,30,30],2,3],show = True,tech = "mea
     """
     take the path of an image with apples, use the parameters provided
     and return the number of apples found
-    parameters = [[tolerance_H,tolerance_S,tolerance_V], i_erosion, i_closing, s_kernel]
+    parameters = [[tolerance_H,tolerance_S,tolerance_V], i_opening, s_kernel]
     [tolerance_H,tolerance_S,tolerance_V] between 0 and 255 for the magic wand
     i_opening : nb of opening
     s_kernal : width and height of the square kernel
@@ -343,8 +330,6 @@ def do_n_img(n,parameters,opening_i):
 
     print("mean error:",statistics.mean(L_errors))
 
-    print("standard deviation:",statistics.stdev(L_errors))
-
     print("sum of errors:",sum(L_errors))
 
     print("In total, my algorithm counted",sum(L_found),"apples on",
@@ -368,121 +353,4 @@ def do_n_img(n,parameters,opening_i):
     print("RSME =",RSME)
     print("R2 =",R2)
     dif = sum(L_truth)-sum(L_found)
-    return (dif,MAE,RSME,R2,statistics.stdev(L_errors))
-
-# %%    IMAGE SEULE
-path_imgs = "MinneApple/imgs/detection/train/images/"
-path_masks = "MinneApple/imgs/detection/train/masks/"
-
-parameters = [[25,80,80],1,3]
-rouge = "20150921_131346_image211.png"
-verte_chelou = "20150919_174730_image1331.png"
-yellow_green = "20150919_174151_image1.png"
-vert_dur = "20150919_174151_image231.png"
-img_path = path_imgs + rouge
-mask_path = path_masks + rouge
-
-show_img(img_path)
-show_img(mask_path)
-truth,true_mask = ground_truth(mask_path,show = False)
-found,found_mask = count_apples(img_path,parameters,show = True,tech = "sum",opening_yellow=3)
-print(truth[0],found[0])
-show_img(found_mask)
-show_img(generate_cool_mask(found_mask))
-show_img(draw_on_original(found_mask,img_path))
-#%% test variying parameters
-
-L_results = []
-i = 0
-
-for opening_i in [4]: #4 ! 
-    for tolerance in [30]:
-        for SV_tolerance in [80]:
-            for opening_base in [0,1,2,3]:
-                for opening_yellow in [0,1,2,3]:
-                    for s_kernel in [1,2,3,4]:
-                        parameters = [[tolerance,SV_tolerance,SV_tolerance],opening_base,s_kernel]
-                        print(parameters,opening_yellow)
-                        statistics_of_batch = do_n_img(100,parameters,opening_yellow)
-                        L_results.append((parameters,opening_i,statistics_of_batch))
-                
-print(L_results)
-# 2 3 o u 3 2 avec cross
-#%% best ones
-for parameters,open_i in ( ([[30, 80, 80], 0, 4],3),([[30, 80, 80], 2, 3],3),([[30, 80, 80], 3, 3],2) ):
-    print(parameters,opening_yellow)
-    statistics_of_batch = do_n_img(100,parameters,opening_yellow)
-#[[30, 80, 80], 0, 4] 3
-#[[30, 80, 80], 2, 3] 3
-#[[30, 80, 80], 3, 3] 2
-#%% DEPRECATED
-L_results = [([[15, 60, 60], 0, 0, 3], -507), ([[15, 60, 60], 0, 1, 3], -166), ([[15, 60, 60], 0, 2, 3], -95), ([[15, 60, 60], 1, 0, 3], -42), ([[15, 60, 60], 1, 1, 3], -65), ([[15, 60, 60], 1, 2, 3], -32), ([[15, 60, 60], 2, 0, 3], 57), ([[15, 60, 60], 2, 1, 3], 10), ([[15, 60, 60], 2, 2, 3], -8), ([[15, 80, 80], 0, 0, 3], -2636), ([[15, 80, 80], 0, 1, 3], -567), ([[15, 80, 80], 0, 2, 3], -224), ([[15, 80, 80], 1, 0, 3], -55), ([[15, 80, 80], 1, 1, 3], -182), ([[15, 80, 80], 1, 2, 3], -119), ([[15, 80, 80], 2, 0, 3], 24), ([[15, 80, 80], 2, 1, 3], 3), ([[15, 80, 80], 2, 2, 3], -38), ([[15, 100, 100], 0, 0, 3], -5289), ([[15, 100, 100], 0, 1, 3], -514), ([[15, 100, 100], 0, 2, 3], -131), ([[15, 100, 100], 1, 0, 3], -262), ([[15, 100, 100], 1, 1, 3], -732), ([[15, 100, 100], 1, 2, 3], -378), ([[15, 100, 100], 2, 0, 3], 4), ([[15, 100, 100], 2, 1, 3], -52), ([[15, 100, 100], 2, 2, 3], -208), ([[20, 60, 60], 0, 0, 3], -516), ([[20, 60, 60], 0, 1, 3], -166), ([[20, 60, 60], 0, 2, 3], -96), ([[20, 60, 60], 1, 0, 3], -39), ([[20, 60, 60], 1, 1, 3], -65), ([[20, 60, 60], 1, 2, 3], -32), ([[20, 60, 60], 2, 0, 3], 55), ([[20, 60, 60], 2, 1, 3], 8), ([[20, 60, 60], 2, 2, 3], -6), ([[20, 80, 80], 0, 0, 3], -2749), ([[20, 80, 80], 0, 1, 3], -581), ([[20, 80, 80], 0, 2, 3], -228), ([[20, 80, 80], 1, 0, 3], -53), ([[20, 80, 80], 1, 1, 3], -188), ([[20, 80, 80], 1, 2, 3], -124), ([[20, 80, 80], 2, 0, 3], 22), ([[20, 80, 80], 2, 1, 3], 4), ([[20, 80, 80], 2, 2, 3], -35), ([[20, 100, 100], 0, 0, 3], -5665), ([[20, 100, 100], 0, 1, 3], -500), ([[20, 100, 100], 0, 2, 3], -120), ([[20, 100, 100], 1, 0, 3], -266), ([[20, 100, 100], 1, 1, 3], -755), ([[20, 100, 100], 1, 2, 3], -393), ([[20, 100, 100], 2, 0, 3], 3), ([[20, 100, 100], 2, 1, 3], -51), ([[20, 100, 100], 2, 2, 3], -211), ([[25, 60, 60], 0, 0, 3], -532), ([[25, 60, 60], 0, 1, 3], -173), ([[25, 60, 60], 0, 2, 3], -101), ([[25, 60, 60], 1, 0, 3], -39), ([[25, 60, 60], 1, 1, 3], -65), ([[25, 60, 60], 1, 2, 3], -32), ([[25, 60, 60], 2, 0, 3], 55), ([[25, 60, 60], 2, 1, 3], 8), ([[25, 60, 60], 2, 2, 3], -6), ([[25, 80, 80], 0, 0, 3], -2837), ([[25, 80, 80], 0, 1, 3], -579), ([[25, 80, 80], 0, 2, 3], -223), ([[25, 80, 80], 1, 0, 3], -53), ([[25, 80, 80], 1, 1, 3], -190), ([[25, 80, 80], 1, 2, 3], -126), ([[25, 80, 80], 2, 0, 3], 22), ([[25, 80, 80], 2, 1, 3], 4), ([[25, 80, 80], 2, 2, 3], -35), ([[25, 100, 100], 0, 0, 3], -5832), ([[25, 100, 100], 0, 1, 3], -477), ([[25, 100, 100], 0, 2, 3], -114), ([[25, 100, 100], 1, 0, 3], -270), ([[25, 100, 100], 1, 1, 3], -788), ([[25, 100, 100], 1, 2, 3], -407), ([[25, 100, 100], 2, 0, 3], 3), ([[25, 100, 100], 2, 1, 3], -51), ([[25, 100, 100], 2, 2, 3], -215), ([[30, 60, 60], 0, 0, 3], -533), ([[30, 60, 60], 0, 1, 3], -173), ([[30, 60, 60], 0, 2, 3], -102), ([[30, 60, 60], 1, 0, 3], -39), ([[30, 60, 60], 1, 1, 3], -65), ([[30, 60, 60], 1, 2, 3], -32), ([[30, 60, 60], 2, 0, 3], 55), ([[30, 60, 60], 2, 1, 3], 8), ([[30, 60, 60], 2, 2, 3], -6), ([[30, 80, 80], 0, 0, 3], -2841), ([[30, 80, 80], 0, 1, 3], -579), ([[30, 80, 80], 0, 2, 3], -225), ([[30, 80, 80], 1, 0, 3], -53), ([[30, 80, 80], 1, 1, 3], -192), ([[30, 80, 80], 1, 2, 3], -127), ([[30, 80, 80], 2, 0, 3], 22), ([[30, 80, 80], 2, 1, 3], 4), ([[30, 80, 80], 2, 2, 3], -35), ([[30, 100, 100], 0, 0, 3], -5845), ([[30, 100, 100], 0, 1, 3], -478), ([[30, 100, 100], 0, 2, 3], -114), ([[30, 100, 100], 1, 0, 3], -271), ([[30, 100, 100], 1, 1, 3], -791), ([[30, 100, 100], 1, 2, 3], -407), ([[30, 100, 100], 2, 0, 3], 3), ([[30, 100, 100], 2, 1, 3], -51), ([[30, 100, 100], 2, 2, 3], -216), ([[35, 60, 60], 0, 0, 3], -532), ([[35, 60, 60], 0, 1, 3], -173), ([[35, 60, 60], 0, 2, 3], -102), ([[35, 60, 60], 1, 0, 3], -39), ([[35, 60, 60], 1, 1, 3], -65), ([[35, 60, 60], 1, 2, 3], -32), ([[35, 60, 60], 2, 0, 3], 55), ([[35, 60, 60], 2, 1, 3], 8), ([[35, 60, 60], 2, 2, 3], -6), ([[35, 80, 80], 0, 0, 3], -2841), ([[35, 80, 80], 0, 1, 3], -580), ([[35, 80, 80], 0, 2, 3], -226), ([[35, 80, 80], 1, 0, 3], -54), ([[35, 80, 80], 1, 1, 3], -192), ([[35, 80, 80], 1, 2, 3], -127), ([[35, 80, 80], 2, 0, 3], 22), ([[35, 80, 80], 2, 1, 3], 4), ([[35, 80, 80], 2, 2, 3], -36), ([[35, 100, 100], 0, 0, 3], -5844), ([[35, 100, 100], 0, 1, 3], -480), ([[35, 100, 100], 0, 2, 3], -115), ([[35, 100, 100], 1, 0, 3], -272), ([[35, 100, 100], 1, 1, 3], -792), ([[35, 100, 100], 1, 2, 3], -408), ([[35, 100, 100], 2, 0, 3], 3), ([[35, 100, 100], 2, 1, 3], -51), ([[35, 100, 100], 2, 2, 3], -217)]
-
-
-L_param1 = []
-L_param2_3 =[]
-L_param4 =[]
-L_opening_i = []
-L_error = []
-
-for i in range(len(L_results)):
-    if abs(L_results[i][1])< 100 and L_results[i][0][2] == 0 and L_results[i][0][1] ==2 and L_results[i][0][0][1] == 100:
-        L_param1.append(L_results[i][0][0][0])
-        L_param2_3.append(L_results[i][0][0][1])
-        L_param4.append(L_results[i][0][1])
-        L_opening_i.append(L_results[i][0][2])
-        L_error.append(L_results[i][1])
-
-Best = [x for x in L_results if abs(x[1])< 10]
-
-def plot_results(x):
-    plt.scatter(x,L_error)
-    plt.plot([min(x),max(x)],[0,0])
-    plt.show()
-
-
-
-
-# %%
-
-X = [x for x in range(100)]
-Y = [model_of_nb_of_apple(x) for x in X]
-plt.plot(X,Y)
-plt.show()
-
-L_true_masks, L_truth, L_names,L_etiquette,L_height \
-    = ground_truth_for_all_data()
-
-L_height_smooth = []
-
-
-
-# %%
-
-# %%
-
-# %%
-
-#do a "pip install patchify" beforehand!!
-import patchify
-import numpy as np
-
-def cut_in_patches(path_to_picture,patch_size):
-    image = cv.imread(path_to_picture) #import image as an array
-    image = image[:,:,::-1]  #convert to RGB
-    
-    patches = patchify.patchify(image, (patch_size,patch_size,3), step=patch_size)
-
-    output = []
-
-    for i in range(len(patches)):
-        for j in range(len(patches[0])):
-            output.append(patches[i][j][0]) #create the output array (X)
-
-    return np.asarray(output)
-
-#to use it, do :
-# 
-# X = cut_in_patches(img_path,180)
-# X.shape gives (28, 180, 180, 3)
-# %%
+    return (sum(L_truth),dif,MAE,RSME,R2)
