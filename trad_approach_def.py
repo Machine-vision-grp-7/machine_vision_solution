@@ -11,7 +11,7 @@ import random
 path_imgs = "MinneApple/imgs/detection/train/images/"
 path_masks = "MinneApple/imgs/detection/train/masks/"
 
-
+inch = 15
 
 def magic_wand(img_hsv,color,tolerance):
     lowerBound = np.array(list_dif(color,tolerance))
@@ -88,26 +88,26 @@ def model_of_nb_of_apple(x):
     return max([A,B])
 
 
-def show_img(path_or_img):
+def show_img(path_or_img,title="Image"):
     
     if type(path_or_img) == str:
         image = cv.imread(path_or_img)
         image_conv = image[:,:,::-1]
-        plt.figure(figsize = (10,10))
+        plt.figure(figsize = (inch,inch))
         plt.axis('off')
-        plt.title("Image")
+        plt.title(title)
         plt.imshow(image_conv)
         plt.show()
     elif type(path_or_img[0][0]) != list:
-        plt.figure(figsize = (10,10))
+        plt.figure(figsize = (inch,inch))
         plt.axis('off')
-        plt.title("Image")
+        plt.title(title)
         plt.imshow(path_or_img,cmap="gray")
         plt.show()
     else:
-        plt.figure(figsize = (10,10))
+        plt.figure(figsize = (inch,inch))
         plt.axis('off')
-        plt.title("Image")
+        plt.title(title)
         plt.imshow(path_or_img[:,:,::-1])
         plt.show()
 
@@ -164,7 +164,7 @@ def ground_truth(file_path,show = True,verbose=1):
     Components_Stats = cv.connectedComponentsWithStats(true_mask_srcu8)
     
     if show:
-        plt.figure(figsize = (10,10))
+        plt.figure(figsize = (inch,inch))
         plt.title("Real mask")
         plt.imshow(true_mask_gray,cmap= "gray")
         plt.show()
@@ -183,7 +183,7 @@ def create_mask_with_color(source_path,parameters,color_hsv_deg_and_percent):
     color_hsv_255 = hsv_degre_and_percent_to_255(color_hsv_deg_and_percent)
 
     mask_apple = magic_wand(src_hsv,color_hsv_255,tolerance)
-    
+    show_img(mask_apple,title = "Mask before openings")
     #kernel = np.ones((s_kernel,s_kernel),np.uint8)
     kernel = cv.getStructuringElement(cv.MORPH_CROSS,(s_kernel,s_kernel))
     # erosion then dilation = closing
@@ -219,11 +219,13 @@ def count_apples(source_path,parameters=[[30,30,30],2,3],show = True,tech = "mea
     P_b = model_of_nb_of_apple(Components_Stats_red[0])
 
     if show:
-        plt.figure(figsize = (10,10))
+        plt.figure(figsize = (inch,inch))
         plt.title("Our yellow mask")
+        plt.axis('off')
         plt.imshow(dilation_yellow,cmap= "gray")
         plt.show()
-        plt.figure(figsize = (10,10))
+        plt.figure(figsize = (inch,inch))
+        plt.axis('off')
         plt.title("Our red mask")
         plt.imshow(dilation_red,cmap= "gray")
         plt.show()

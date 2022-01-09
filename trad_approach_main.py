@@ -19,7 +19,7 @@ from trad_approach_def import *
 path_imgs = "MinneApple/imgs/detection/train/images/"
 path_masks = "MinneApple/imgs/detection/train/masks/"
 
-parameters = [[25,80,80],1,3]
+parameters = [[57, 69, 69], 1, 3]
 
 red_pic = "20150921_131346_image211.png"
 weird_green_pic = "20150919_174730_image1331.png"
@@ -27,12 +27,12 @@ yellow_green_pic = "20150919_174151_image1.png"
 green_pic = "20150919_174151_image231.png"
 
 #choose here which picture to try
-img_path = path_imgs + red_pic
-mask_path = path_masks + red_pic
+img_path = path_imgs + green_pic
+mask_path = path_masks + green_pic
 
 #show the original picture and mask
-show_img(img_path)
-show_img(mask_path)
+show_img(img_path,title = "The original picture")
+show_img(mask_path,title = "The original mask")
 
 #check the original mask and return "truth", a list holding
 #informations about the apples, and "true_mask", an array being
@@ -43,13 +43,13 @@ truth,true_mask = ground_truth(mask_path,show = False)
 #informations about the apples, and "found_mask", an array being
 #the generated mask of the algorithm
 found,found_mask = count_apples(img_path,parameters,show = True,tech = "sum",opening_yellow=3)
-print(truth[0],found[0])
 
 #show the generated array, and circle the estimated position
 #of the apples
-show_img(found_mask)
-show_img(generate_cool_mask(found_mask))
-show_img(draw_on_original(found_mask,img_path))
+show_img(found_mask,title = "The combination of the red and yellow mask")
+show_img(generate_cool_mask(found_mask),title = "Our mask with circled apples")
+show_img(draw_on_original(found_mask,img_path),title = "Original picture with circled apples")
+print("they are", truth[0], "appless but we found",found[0])
 
 
 
