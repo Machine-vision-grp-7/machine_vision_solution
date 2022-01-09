@@ -7,7 +7,7 @@ from os.path import isfile, join
 import statistics
 import sys
 from numpy.core.numeric import outer
-
+import random
 path_imgs = "MinneApple/imgs/detection/train/images/"
 path_masks = "MinneApple/imgs/detection/train/masks/"
 
@@ -288,7 +288,7 @@ def ground_truth_for_all_data(verbose=0):
     plt.show()
     return L_true_masks,L_truth,L_names,L_etiquette,L_height
 
-def do_n_img(n,parameters,opening_i):
+def do_n_img(n,parameters,opening_i,show = True):
     path_imgs = "MinneApple/imgs/detection/train/images/"
     path_masks = "MinneApple/imgs/detection/train/masks/"
 
@@ -296,6 +296,9 @@ def do_n_img(n,parameters,opening_i):
     n_img = n
 
     onlyfiles = [f for f in listdir(path_imgs) if isfile(join(path_imgs, f))]
+
+    
+    random.shuffle(onlyfiles)
 
     trunc_file_names = onlyfiles[0:n_img]
      #et 1 1 pour ero et dila yellow
@@ -311,7 +314,7 @@ def do_n_img(n,parameters,opening_i):
         found,found_mask = count_apples(img_path,parameters,show = False,tech = "sum",opening_yellow=opening_i)
         #print(parameters,file_name)
         #print("truth:",truth[0],"found:",found[0])
-        L_truth.append(truth[0])
+        L_truth.append(truth[0]-1)
         L_found.append(found[0])
         L_names.append(file_name)
         L_found_masks.append(found_mask)
@@ -321,21 +324,6 @@ def do_n_img(n,parameters,opening_i):
         sys.stdout.flush()
 
     L_errors = [L_found[i]-L_truth[i] for i in range(len(L_truth))]
-    plt.title("error on the number of apples found over " + str(n_img)+" pictures")
-    for i_point in range(len(L_errors)):
-        plt.plot([i_point,i_point],[0,L_errors[i_point]],c="r")
-    plt.plot((0,n_img),(0,0),c="black")
-    #plt.ylim(-30,30)
-    plt.show()
-
-    print("mean error:",statistics.mean(L_errors))
-
-    print("sum of errors:",sum(L_errors))
-
-    print("In total, my algorithm counted",sum(L_found),"apples on",
-    n_img,"images, but it should have counted a total of",
-    sum(L_truth),"apples instead.")
-    print("This is an error rate of", round(100*abs(sum(L_errors)/sum(L_truth)),2),"%.")
     SMAE = 0
     SMSE = 0
     y_barre = statistics.mean(L_truth)
@@ -349,8 +337,27 @@ def do_n_img(n,parameters,opening_i):
     MAE= (1/n_img) * SMAE
     RSME= ((1/n_img) * SMSE)**0.5
     R2 = 1-(S_yi_minus_ychapi_squared/S_yi_minus_ybarre_squared)
-    print("MAE =",MAE)
-    print("RSME =",RSME)
-    print("R2 =",R2)
+
+    if show:
+        plt.title("error on the number of apples found over " + str(n_img)+" pictures")
+        for i_point in range(len(L_errors)):
+            plt.plot([i_point,i_point],[0,sorted(L_errors)[i_point]],c="r")
+        plt.plot((0,n_img),(0,0),c="black")
+        #plt.ylim(-30,30)
+        plt.show()
+
+        print("mean error:",statistics.mean(L_errors))
+
+        print("sum of errors:",sum(L_errors))
+
+        print("In total, my algorithm counted",sum(L_found),"apples on",
+        n_img,"images, but it should have counted a total of",
+        sum(L_truth),"apples instead.")
+        print("This is an error rate of", round(100*abs(sum(L_errors)/sum(L_truth)),2),"%.")
+
+        print("MAE =",MAE)
+        print("RSME =",RSME)
+        print("R2 =",R2)
+        
     dif = sum(L_truth)-sum(L_found)
     return (sum(L_truth),dif,MAE,RSME,R2)
