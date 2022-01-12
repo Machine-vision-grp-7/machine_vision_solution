@@ -183,7 +183,7 @@ def create_mask_with_color(source_path,parameters,color_hsv_deg_and_percent):
     color_hsv_255 = hsv_degre_and_percent_to_255(color_hsv_deg_and_percent)
 
     mask_apple = magic_wand(src_hsv,color_hsv_255,tolerance)
-    show_img(mask_apple,title = "Mask before openings")
+    #show_img(mask_apple,title = "Mask before openings")
     #kernel = np.ones((s_kernel,s_kernel),np.uint8)
     kernel = cv.getStructuringElement(cv.MORPH_CROSS,(s_kernel,s_kernel))
     # erosion then dilation = closing
@@ -258,7 +258,9 @@ def count_apples(source_path,parameters=[[30,30,30],2,3],show = True,tech = "mea
 
 
 def ground_truth_for_all_data(verbose=0):
+
     
+
     path_masks = "MinneApple/imgs/detection/train/masks/"
 
     onlyfiles = [f for f in listdir(path_imgs) if isfile(join(path_imgs, f))]
@@ -283,12 +285,16 @@ def ground_truth_for_all_data(verbose=0):
     L_compte_truth = Counter(L_truth).most_common()
     if verbose == 1:
         print(L_compte_truth)
-    plt.title("Y odccurences of pictures with X number of apples")
+    plt.title("Number of apples per picture in the detection dataset")
     L_height = list(zip(*L_compte_truth))[1]
     L_etiquette = list(zip(*L_compte_truth))[0] 
     plt.bar(L_etiquette,L_height)
     plt.show()
-    return L_true_masks,L_truth,L_names,L_etiquette,L_height
+
+
+
+
+    return L_true_masks,L_truth,L_names,L_etiquette,L_height,L_truth
 
 def do_n_img(n,parameters,opening_i,show = True):
     path_imgs = "MinneApple/imgs/detection/train/images/"
@@ -343,8 +349,20 @@ def do_n_img(n,parameters,opening_i,show = True):
     if show:
         plt.title("error on the number of apples found over " + str(n_img)+" pictures")
         for i_point in range(len(L_errors)):
-            plt.plot([i_point,i_point],[0,sorted(L_errors)[i_point]],c="r")
+            plt.plot([i_point,i_point],[0,L_errors[i_point]],c="r")
         plt.plot((0,n_img),(0,0),c="black")
+        #plt.ylim(-30,30)
+        plt.show()
+        
+
+
+        trilist1 = L_truth.copy()
+        list2 = L_found.copy()
+        trilist1, list2 = zip(*sorted(zip(trilist1, list2)))
+
+
+        plt.plot(trilist1,c="black")
+        plt.scatter(list(range(len(list2))),list2,c="red")
         #plt.ylim(-30,30)
         plt.show()
 
@@ -362,4 +380,4 @@ def do_n_img(n,parameters,opening_i,show = True):
         print("R2 =",R2)
         
     dif = sum(L_truth)-sum(L_found)
-    return (sum(L_truth),dif,MAE,RSME,R2)
+    return (L_truth,L_found,sum(L_truth),S_yi_minus_ychapi_squared,dif,MAE,RSME,R2)

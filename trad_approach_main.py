@@ -1,6 +1,7 @@
 #%%
 
 import numpy as np
+import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 import cv2 as cv
@@ -10,8 +11,15 @@ import statistics
 from numpy.core.numeric import outer
 import sys
 
+font = {'family' : 'normal',
+        'weight' : 'normal',
+        'size'   : 12}
+
+matplotlib.rc('font', **font)
 
 import sys
+
+PATH_TO_PROJECT_FOLDER = 'D:/Documents/MSC/machine vision/project/' 
 sys.path.insert(0, 'D:/Documents/MSC/machine vision/project/')
 from trad_approach_def import *
 
@@ -70,39 +78,11 @@ for tolerance in [45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60]:
                     L_results.append((parameters,opening_yellow,statistics_of_batch))
 
 print(L_results)
-#%% deal with results
-L_work = L_results.copy()
-for i in range(len(L_work)):
-    L_work[i] = [L_work[i][0],L_work[i][1],round(L_work[i][2][3],3)]
-    print(L_work[i])
-#%% best ones
-L_results_sorted = sorted(L_results, key = lambda x: x[2][3])
-bests = L_results_sorted[:3]
-for i in  bests:
-    print(i)
 
 #%% use this to run the algorithm on the dataset:
-
-Results = do_n_img(20,[[30, 80, 80], 2, 3], 3)
-#Results =  (total nb of apple,error in apples,MAE,RSME,R2)
-#%%
-do_n_img(670,[[57, 69, 69], 1, 3], 3)
-#best parameters for now :
-#[[30, 80, 80], 2, 3], 3
-#[[30, 80, 80], 2, 3], 4
-
-#[30, 80, 80], 2, 3], 4
-#[30, 80, 80], 3, 3], 4
-#[30, 80, 80], 3, 3], 4
-
-#([[20, 50, 50], 4, 3], -1, (5867, -375, 9.370000000000001, 12.756566936288149, 0.8699305755546055))
-#([[20, 50, 50], 3, 3], 0, (5867, -378, 9.38, 12.767928571228772, 0.8696987797389036))
-#([[20, 50, 50], 2, 3], 1, (5867, -379, 9.39, 12.774584141959377, 0.8695628994331474))
-
+L_truth,L_found,coucou,S_yi_minus_ychapi_squared,dif,MAE,RSME,R2 = do_n_img(570,[[57, 69, 69], 1, 3], 3)
 
 # %%
 #use this to get info on the database
-L_true_masks, L_truth, L_names,L_etiquette,L_height \
+L_true_masks, L_truth, L_names,L_etiquette,L_height,L_all_truth \
     = ground_truth_for_all_data()
-
-# %%
